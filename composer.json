@@ -1,0 +1,38 @@
+{
+  "name": "innis-maggiore/silverstripe-userforms-submission-filter",
+  "description": "Silverstripe UserForms Filter module allows developers to filter FormSubmissionFields by a list of filter keys after form submission and in turn changes email recipients and subject. It also adds a new Hidden IpFormField that can be added to UDF fields list for easier IP blocking",
+  "type": "silverstripe-vendormodule",
+  "homepage": "https://github.com/innis-maggiore/silverstripe-userforms-submission-filter",
+  "keywords": ["silverstripe", "UserForm", "Filter", "Field", "Hidden", "IP"],
+  "license": "BSD-3-Clause",
+  "authors": [
+    {
+      "name": "Noah Whittington",
+      "email": "web-dev@innismaggiore.com"
+    }, {
+      "name": "Richard Prince",
+      "email": "web-dev@innismaggiore.com"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/innis-maggiore/silverstripe-userforms-submission-filter/issues"
+  },
+  "require": {
+    "php": ">=7.4.0",
+    "silverstripe/cms": "^5.0",
+    "silverstripe/userforms": "^6.0"
+  },
+  "replace": {
+    "mediumdubb/silverstripe-userforms-submission-filter": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "InnisMaggiore\\SilverstripeUserFormsSubmissionFilter\\": "src/"
+    }
+  },
+  "extra": {
+    "installer-name": "silverstripe-userforms-submission-filter"
+  },
+  "prefer-stable": true,
+  "minimum-stability": "dev"
+}
