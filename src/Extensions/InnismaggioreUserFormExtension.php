@@ -2,35 +2,60 @@
 
 namespace InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions;
 
+use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Models\SpamEmailRecipient;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
+use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TextareaField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
+use SilverStripe\SiteConfig\SiteConfig;
 
 class InnismaggioreUserFormExtension extends Extension
 {
     private static array $db = [
         'FilterList'            => 'Varchar(510)',
-        'FilterEmailRecipients' => 'Varchar(255)',
+    ];
+
+    private static array $many_many = [
+        'SpamEmailRecipients'   => SpamEmailRecipient::class,
     ];
 
     public function updateCMSFields(FieldList $fields)
     {
+        $fields->removeByName([
+            'FilterList',
+            'SpamEmailRecipients',
+        ]);
+
         $emailTLD = Config::inst()->get(InnismaggioreUserFormExtension::class,'email_tld') ?? '@innismaggiore.com';
-        $firstTLDAdmin = Member::get()->filter('Groups.Code', 'administrators')->filter('Email:PartialMatch:nocase', $emailTLD)->first();
-        $defaultEmail = $firstTLDAdmin ? $firstTLDAdmin->Email : 'web-dev@innismaggiore.com';
+
+        if (!$this->getOwner()->SpamEmailRecipients()->exists()) {
+            $firstTLDAdmin = Member::get()->filter('Groups.Code', 'administrators')->filter('Email:PartialMatch:nocase', $emailTLD)->first();
+            $defaultEmail = $firstTLDAdmin ? $firstTLDAdmin->Email : 'web-dev@innismaggiore.com';
+            $spamRecip = new SpamEmailRecipient();
+            $spamRecip->EmailAddress = $defaultEmail;
+            $spamRecip->FormID = $this->getOwner()->ID;
+            $spamRecip->write();
+            $this->getOwner()->SpamEmailRecipients()->Add($spamRecip);
+            $this->getOwner()->write();
+        }
+
         if (str_contains(Security::getCurrentUser()->Email, $emailTLD)) {
-            $fields->addFieldToTab(
-                'Root.FormOptions',
-                TextareaField::create('FilterList', 'Filter List')
-                    ->setDescription('Separate filter keys by spaces or commas, wrap key phrases in "" (double quotes) this will ignore the space comma delineation rule. Be as specific as possible and remember if the key is too generic it might throw false positives and good submissions may be marked as spam. There is no partial matching, it is all explicit case sensitive matching.')
-            );
-            $fields->addFieldToTab(
-                'Root.FormOptions',
-                TextareaField::create('FilterEmailRecipients', 'Alert Recipients', $defaultEmail)
-                    ->setDescription('Separate emails by new line, defaults to `web-dev@innismaggiore.com`')
+            $fields->addFieldsToTab(
+                'Root.Spam',
+                [
+                    TextareaField::create('FilterList', 'Filter List')
+                        ->setDescription('Separate filter keys by spaces or commas, wrap key phrases in "" (double quotes) this will ignore the space comma delineation rule. Be as specific as possible and remember if the key is too generic it might throw false positives and good submissions may be marked as spam. There is no partial matching, it is all explicit case sensitive matching.'),
+                    GridField::create('SpamEmailRecipients',
+                        'Spam Recipients',
+                        $this->getOwner()->SpamEmailRecipients(),
+                        GridFieldConfig_RecordEditor::create()
+                    )
+                ]
             );
         }
     }
@@ -46,8 +71,19 @@ class InnismaggioreUserFormExtension extends Extension
         return null;
     }
 
-    public function getFilterRecipientList()
+    public function updateFilteredEmailRecipients($recipients, $data, $form)
     {
-        return preg_split('/\R/', $this->getOwner()->FilterEmailRecipients, -1, PREG_SPLIT_NO_EMPTY);
+        $list = $this->getOwner()->getFilterListArray();
+        $no_matches_list = array_diff($data, $list);
+        $match = ( count( $no_matches_list ) !== count( $list ) );
+
+        if ($match) {
+            foreach ($recipients as $recipient) {
+                $recipients->remove($recipient);
+            }
+            foreach ($this->getOwner()->SpamEmailRecipients() as $spamRecip) {
+                $recipients->push($spamRecip);
+            }
+        }
     }
 }
