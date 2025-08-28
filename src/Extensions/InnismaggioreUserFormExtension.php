@@ -6,6 +6,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextareaField;
+use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
 class InnismaggioreUserFormExtension extends Extension
@@ -18,6 +19,8 @@ class InnismaggioreUserFormExtension extends Extension
     public function updateCMSFields(FieldList $fields)
     {
         $emailTLD = Config::inst()->get(InnismaggioreUserFormExtension::class,'email_tld') ?? '@innismaggiore.com';
+        $firstTLDAdmin = Member::get()->filter('Groups.Code', 'administrators')->filter('Email:PartialMatch:nocase', $emailTLD)->first();
+        $defaultEmail = $firstTLDAdmin ? $firstTLDAdmin->Email : 'web-dev@innismaggiore.com';
         if (str_contains(Security::getCurrentUser()->Email, $emailTLD)) {
             $fields->addFieldToTab(
                 'Root.FormOptions',
@@ -26,7 +29,7 @@ class InnismaggioreUserFormExtension extends Extension
             );
             $fields->addFieldToTab(
                 'Root.FormOptions',
-                TextareaField::create('FilterEmailRecipients', 'Alert Recipients')
+                TextareaField::create('FilterEmailRecipients', 'Alert Recipients', $defaultEmail)
                     ->setDescription('Separate emails by new line, defaults to `web-dev@innismaggiore.com`')
             );
         }
@@ -45,9 +48,6 @@ class InnismaggioreUserFormExtension extends Extension
 
     public function getFilterRecipientList()
     {
-        if ($this->getOwner()->FilterList)
-            return preg_split('/\R/', $this->getOwner()->FilterEmailRecipients, -1, PREG_SPLIT_NO_EMPTY);
-
-        return ['web-dev@innismaggiore.com'];
+        return preg_split('/\R/', $this->getOwner()->FilterEmailRecipients, -1, PREG_SPLIT_NO_EMPTY);
     }
 }
