@@ -2,7 +2,9 @@
 
 namespace InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions;
 
+use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Code\FormSubmissionFilter;
 use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Models\SpamEmailRecipient;
+use SilverStripe\Forms\TabSet;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\FieldList;
@@ -20,7 +22,7 @@ class InnismaggioreUserFormExtension extends Extension
         'FilterList'            => 'Varchar(510)',
     ];
 
-    private static array $many_many = [
+    private static array $has_many = [
         'SpamEmailRecipients'   => SpamEmailRecipient::class,
     ];
 
@@ -31,32 +33,29 @@ class InnismaggioreUserFormExtension extends Extension
             'SpamEmailRecipients',
         ]);
 
-        $emailTLD = Config::inst()->get(InnismaggioreUserFormExtension::class,'email_tld') ?? '@innismaggiore.com';
-
-        if (!$this->getOwner()->SpamEmailRecipients()->exists()) {
-            $firstTLDAdmin = Member::get()->filter('Groups.Code', 'administrators')->filter('Email:PartialMatch:nocase', $emailTLD)->first();
-            $defaultEmail = $firstTLDAdmin ? $firstTLDAdmin->Email : 'web-dev@innismaggiore.com';
-            $spamRecip = new SpamEmailRecipient();
-            $spamRecip->EmailAddress = $defaultEmail;
-            $spamRecip->FormID = $this->getOwner()->ID;
-            $spamRecip->write();
-            $this->getOwner()->SpamEmailRecipients()->Add($spamRecip);
-            $this->getOwner()->write();
-        }
-
-        if (str_contains(Security::getCurrentUser()->Email, $emailTLD)) {
-            $fields->addFieldsToTab(
-                'Root.Spam',
-                [
-                    TextareaField::create('FilterList', 'Filter List')
-                        ->setDescription('Separate filter keys by spaces or commas, wrap key phrases in "" (double quotes) this will ignore the space comma delineation rule. Be as specific as possible and remember if the key is too generic it might throw false positives and good submissions may be marked as spam. There is no partial matching, it is all explicit case sensitive matching.'),
+        $fields->addFieldToTab('Root.Spam',
+            TabSet::create('SpamTabSet',
+                Tab::create('SpamRecipientTab', 'Spam Recipients',
                     GridField::create('SpamEmailRecipients',
                         'Spam Recipients',
                         $this->getOwner()->SpamEmailRecipients(),
-                        GridFieldConfig_RecordEditor::create()
+                        GridFieldConfig_RecordEditor::create(),
                     )
-                ]
-            );
+                )
+            )
+        );
+
+        if ($emailTLD = Config::inst()->get(InnismaggioreUserFormExtension::class,'email_tld')) {
+            if (str_contains(Security::getCurrentUser()->Email, $emailTLD)) {
+                $fields->addFieldsToTab(
+                    'Root.Spam.SpamTabSet',
+                    [
+                        Tab::create('SpamFilterList', 'Filter List',
+                            TextareaField::create('FilterList', 'Filter List')->setDescription('Separate filter keys by spaces or commas, wrap key phrases in "" (double quotes) this will ignore the space comma delineation rule. Be as specific as possible and remember if the key is too generic it might throw false positives and good submissions may be marked as spam. There is no partial matching, it is all explicit case sensitive matching.'),
+                        )
+                    ]
+                );
+            }
         }
     }
 
@@ -74,15 +73,22 @@ class InnismaggioreUserFormExtension extends Extension
     public function updateFilteredEmailRecipients($recipients, $data, $form)
     {
         $list = $this->getOwner()->getFilterListArray();
-        $no_matches_list = array_diff($data, $list);
-        $match = ( count( $no_matches_list ) !== count( $list ) );
+        $formSubFilter = new FormSubmissionFilter($data);
 
-        if ($match) {
+        // todo: Make submissionScrubber() class
+        // check if first and last name match
+        // check for Unicode character properties
+        // check message field against a list of "trigger" words or phrases, and set a range for deciding how many times a trigger is found in the message before being marked spam
+        // check global field trigger keyword bank. 1:1 match and case sensitive, auto mark as spam
+
+        if ($formSubFilter->matchesSpam($list)) {
             foreach ($recipients as $recipient) {
                 $recipients->remove($recipient);
             }
-            foreach ($this->getOwner()->SpamEmailRecipients() as $spamRecip) {
-                $recipients->push($spamRecip);
+            if ($this->getOwner()->SpamEmailRecipients()->count() >= 1) {
+                foreach ($this->getOwner()->SpamEmailRecipients() as $spamRecip) {
+                    $recipients->push($spamRecip);
+                }
             }
         }
     }

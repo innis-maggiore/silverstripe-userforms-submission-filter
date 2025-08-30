@@ -26,6 +26,6 @@ DNADesign\ElementalUserForms\Model\ElementForm:
 
 **app/_config/mysite.yml**
 ```html
-InnisMaggiore\SilverstripeUserFormsSubmissionFilter\UserFormsSubmissionFilter:
+InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions\InnismaggioreUserFormExtension:
   email_tld: '@mycompany.com'
 ```

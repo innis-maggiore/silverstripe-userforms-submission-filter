@@ -8,4 +8,3 @@ SilverStripe\UserForms\Model\UserDefinedForm:
     - InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions\InnismaggioreUserFormExtension
   field_classes:
     InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Models\FormFields\IpFormField: 'IP Form Field'
-  email_tld: '@innismaggiore.com'

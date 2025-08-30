@@ -9,6 +9,8 @@ use SilverStripe\UserForms\Model\EditableFormField;
 
 class IpFormField extends EditableFormField
 {
+    private static $table_name = 'IpFormField';
+
     private static $singular_name = 'Hidden IP Field';
 
     private static $plural_name = 'Hidden IP Fields';
@@ -29,8 +31,6 @@ class IpFormField extends EditableFormField
 
         return $fields;
     }
-
-    private static $table_name = 'IpFormField';
 
     /**
      * @return ValidationResult
