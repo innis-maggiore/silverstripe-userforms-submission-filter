@@ -3,6 +3,9 @@ Name: userforms-submission-filter-extensions
 Before:
   - '#userformsconfig:'
 ---
+SilverStripe\UserForms\Control\UserDefinedFormController:
+  extensions:
+    - InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions\InnismaggioreUserDefinedFormControllerExtension
 SilverStripe\UserForms\Model\UserDefinedForm:
   extensions:
     - InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions\InnismaggioreUserFormExtension

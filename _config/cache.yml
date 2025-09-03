@@ -1,0 +1,9 @@
+---
+Name: innis-userform-extension-cache
+After: '#corecache'
+---
+SilverStripe\Core\Injector\Injector:
+  Psr\SimpleCache\CacheInterface.innismaggioreUserFormExtensionCache:
+    factory: SilverStripe\Core\Cache\CacheFactory
+    constructor:
+      namespace: "innismaggioreUserFormExtensionCache"

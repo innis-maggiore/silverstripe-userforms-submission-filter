@@ -80,11 +80,11 @@ class FormSubmissionFilter
         $this->setMessages($messageFields);
     }
 
-    public function matchesSpam($filterList): bool
+    public function matchesSpam($filterList, $countList): bool
     {
         return in_array($this->getData(), $filterList) ||
             $this->checkDuplicateVals() ||
-            $this->countFlagWordsInMessageField($filterList); // check global field trigger keyword bank. 1:1 match and case sensitive, auto mark as spam
+            $this->countFlagWordsInMessageField($countList); // check global field trigger keyword bank. 1:1 match and case sensitive, auto mark as spam
     }
 
     // check if two fields have identical values
@@ -108,22 +108,19 @@ class FormSubmissionFilter
     }
 
     // check message field against a list of "trigger" words or phrases, and set a range for deciding how many times a trigger is found in the message before being marked spam
-    private function countFlagWordsInMessageField($filterList): bool
+    private function countFlagWordsInMessageField($countList): bool
     {
-        $limit = $this->getKeyCount();
-
-        if (!$limit)
+        if (!$limit = $this->getKeyCount() || !$countList)
             return false;
 
         $messages = $this->getMessages();
         $count = 0;
 
-
         foreach ($messages as $message) {
-            foreach ($filterList as $key) {
+            foreach ($countList as $key) {
                 $count += substr_count($message, $key);
             }
-            if ($count > $limit)
+            if ($count >= $limit)
                 return true;
 
             $count = 0;
