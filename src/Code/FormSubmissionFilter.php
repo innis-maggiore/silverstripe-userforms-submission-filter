@@ -59,7 +59,7 @@ class FormSubmissionFilter
         $messageFields = [];
 
         $this->setDupeCheck(!$form->getController()->DisDupeCheck);
-        $this->setKeyCount($form->getController()->KeyCount);
+        $this->setKeyCount($form->getController()->KeyCount ? 1 : 0);
 
         foreach ($fields as $field) {
             if (!$field->showInReports()
@@ -90,6 +90,9 @@ class FormSubmissionFilter
     // check if two fields have identical values
     private function checkDuplicateVals(): bool
     {
+        if (!$this->getDupeCheck())
+            return false;
+
         $data = array_values($this->getData());
         $dataIndexes = count($data) - 1;
         for ($i = 0; $i < $dataIndexes; $i++) {
@@ -107,9 +110,13 @@ class FormSubmissionFilter
     // check message field against a list of "trigger" words or phrases, and set a range for deciding how many times a trigger is found in the message before being marked spam
     private function countFlagWordsInMessageField($filterList): bool
     {
+        $limit = $this->getKeyCount();
+
+        if (!$limit)
+            return false;
+
         $messages = $this->getMessages();
         $count = 0;
-        $limit = 5;
 
 
         foreach ($messages as $message) {
