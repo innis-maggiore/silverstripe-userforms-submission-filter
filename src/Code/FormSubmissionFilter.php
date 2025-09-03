@@ -128,10 +128,4 @@ class FormSubmissionFilter
 
         return false;
     }
-
-    private function getIsKeyPhrase($key): bool
-    {
-        return preg_match('/ +/', $key);
-    }
-
 }
