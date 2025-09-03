@@ -3,40 +3,23 @@
 namespace InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions;
 
 use SilverStripe\Core\Extension;
-use SilverStripe\UserForms\Model\Submission\SubmittedForm;
 
 class InnismaggioreUserDefinedFormControllerExtension extends Extension
 {
-    private static bool $isSpam = false;
-    private static bool $delete = false;
+    private static ?int $submittedFormID = null;
 
-    public function getIsSpam()
+    public function getSubFormID()
     {
-        return self::$isSpam;
+        return self::$submittedFormID;
     }
 
-    public function setIsSpam($bool)
+    public function setSubFormID($id)
     {
-        self::$isSpam = $bool;
-    }
-
-    public function getDoDelete()
-    {
-        return self::$delete;
-    }
-
-    public function setDoDelete($bool)
-    {
-        self::$delete = $bool;
+        self::$submittedFormID = $id;
     }
 
     public function updateEmailData($emailData, $attachments)
     {
-        $submittedFormID = $emailData['SubmittedForm']->ID;
-
-        if ($submittedFormID && $this->getIsSpam() && $this->getDoDelete()) {
-            SubmittedForm::get_by_id($submittedFormID)->delete();
-        }
-
+        $this->setSubFormID($emailData['SubmittedForm']->ID);
     }
 }

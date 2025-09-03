@@ -3,21 +3,17 @@
 namespace InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions;
 
 use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Code\FormSubmissionFilter;
-use SilverStripe\Forms\TabSet;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\GridField\GridField;
-use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TextareaField;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\NumericField;
-use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
-use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\Core\Injector\Injector;
 use Psr\SimpleCache\CacheInterface;
+use SilverStripe\UserForms\Model\Submission\SubmittedForm;
 
 
 class InnismaggioreUserFormExtension extends Extension
@@ -47,9 +43,9 @@ class InnismaggioreUserFormExtension extends Extension
                     'Root.Spam',
                     [
                         Tab::create('SpamFilterList', 'Filter List',
-                            TextareaField::create('FilterList', 'Filter List')->setDescription('Compares all form field values against this list. A match between a field value and a list item will auto mark submission as spam. Separate filter keys by spaces or commas, wrap key phrases in "" (double quotes) this will ignore the space comma delineation rule. Be as specific as possible and remember if the key is too generic it might throw false positives and good submissions may be marked as spam. There is no partial matching, it is all explicit case sensitive matching.'),
-                            TextareaField::create('CountList', 'Count List')->setDescription('Counts all occurrence of the items in this list against each textarea field in the form. Control amount of times a trigger word must appear before being considered spam with `Key Counter` below.'),
-                            NumericField::create('KeyCount', 'Key Counter')
+                            TextareaField::create('FilterList', 'Field Values Trigger List')->setDescription('Compares all form field values against this list. A match between a field value and a list item will auto mark submission as spam. Separate filter keys by spaces or commas, wrap key phrases in "" (double quotes) this will ignore the space comma delineation rule. Be as specific as possible and remember if the key is too generic it might throw false positives and good submissions may be marked as spam. There is no partial matching, it is all explicit case sensitive matching.'),
+                            TextareaField::create('CountList', 'Message Body Trigger List')->setDescription('Counts all occurrence of the items in this list against each textarea field in the form. Control amount of times a trigger word must appear before being considered spam with `Message Body Trigger Limit` below.'),
+                            NumericField::create('KeyCount', 'Message Body Trigger Limit')
                                 ->setDescription('Set number of times a trigger word must be present in textarea before being considered spam. For Key Counter Filter. Set to 0 to turn off.'),
                             CheckboxField::create('DisDupeCheck', 'Disable Duplicate Key Filter'),
                             CheckboxField::create('DeleteSpamSubmission', 'Delete Spam Submissions from Database'),
@@ -99,11 +95,14 @@ class InnismaggioreUserFormExtension extends Extension
         $formSubFilter = new FormSubmissionFilter($data, $form);
 
         if ($formSubFilter->matchesSpam($ex_list, $count_list)) {
-            $this->getOwner()->getController()->getUserFormController()->setIsSpam(true);
-            $this->getOwner()->getController()->getUserFormController()->setdoDelete($this->getOwner()->DeleteSpamSubmission);
             foreach ($recipients as $recipient) {
                 if (!$recipient->SpamRecipient)
                     $recipients->remove($recipient);
+            }
+            if ($this->getOwner()->DeleteSpamSubmission) {
+                if ($subFormID = $this->getOwner()->getController()->getUserFormController()->getSubFormID()) {
+                    SubmittedForm::get_by_id($subFormID)->delete();
+                }
             }
         }
     }
