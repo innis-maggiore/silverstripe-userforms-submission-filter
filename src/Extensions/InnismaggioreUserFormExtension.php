@@ -110,6 +110,11 @@ class InnismaggioreUserFormExtension extends Extension
                     $submittedForm->write();
                 }
             }
+        } else {
+            foreach ($recipients as $recipient) {
+                if ($recipient->SpamRecipient)
+                    $recipients->remove($recipient);
+            }
         }
     }
 }

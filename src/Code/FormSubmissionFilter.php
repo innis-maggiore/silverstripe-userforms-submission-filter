@@ -82,9 +82,14 @@ class FormSubmissionFilter
 
     public function matchesSpam($filterList, $countList): bool
     {
-        return in_array($this->getData(), $filterList) ||
+        return $this->checkForTriggerVals($filterList) ||
             $this->checkDuplicateVals() ||
             $this->countFlagWordsInMessageField($countList); // check global field trigger keyword bank. 1:1 match and case sensitive, auto mark as spam
+    }
+
+    private function checkForTriggerVals($filterList): bool
+    {
+        return ( count( array_diff( $filterList, $this->getData() ) ) !== count( $filterList ) );
     }
 
     // check if two fields have identical values
