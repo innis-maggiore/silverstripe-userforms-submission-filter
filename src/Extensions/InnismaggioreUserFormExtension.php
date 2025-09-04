@@ -104,6 +104,11 @@ class InnismaggioreUserFormExtension extends Extension
                     SubmittedForm::get_by_id($subFormID)->delete();
                 }
             }
+        } else {
+            foreach ($recipients as $recipient) {
+                if ($recipient->SpamRecipient)
+                    $recipients->remove($recipient);
+            }
         }
     }
 }
