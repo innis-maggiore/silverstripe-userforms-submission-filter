@@ -89,7 +89,7 @@ class FormSubmissionFilter
 
     private function checkForTriggerVals($filterList): bool
     {
-        return ( count( array_diff( $this->getData(), $filterList ) ) !== count( $filterList ) );
+        return ( count( array_diff( $filterList, $this->getData() ) ) !== count( $filterList ) );
     }
 
     // check if two fields have identical values
