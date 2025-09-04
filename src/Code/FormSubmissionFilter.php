@@ -13,46 +13,6 @@ class FormSubmissionFilter
     private static bool $keyCount = true;
     private static bool $dupeCheck = true;
 
-    private function getData(): array
-    {
-        return self::$data;
-    }
-
-    private function setData($data): void
-    {
-        self::$data = $data;
-    }
-
-    private function getKeyCount(): bool
-    {
-        return self::$keyCount;
-    }
-
-    private function setKeyCount($val): void
-    {
-        self::$keyCount = $val;
-    }
-
-    private function getDupeCheck(): bool
-    {
-        return self::$dupeCheck;
-    }
-
-    private function setDupeCheck($val): void
-    {
-        self::$dupeCheck = $val;
-    }
-
-    private function getMessages(): array
-    {
-        return self::$messages;
-    }
-
-    private function setMessages($messages): void
-    {
-        self::$messages = $messages;
-    }
-
     public function __construct($data, $form)
     {
         $fields = $form->getController()->data()->Fields();
@@ -80,16 +40,30 @@ class FormSubmissionFilter
         $this->setMessages($messageFields);
     }
 
-    public function matchesSpam($filterList, $countList): bool
+    public function matchesSpam($filterList, $countList, $mappedList): bool
     {
-        return $this->checkForTriggerVals($filterList) ||
-            $this->checkDuplicateVals() ||
-            $this->countFlagWordsInMessageField($countList); // check global field trigger keyword bank. 1:1 match and case sensitive, auto mark as spam
+        return $this->checkForTriggerVals($filterList) 
+            || $this->checkDuplicateVals() 
+            || $this->countFlagWordsInMessageField($countList) 
+            || $this->checkMappedFieldFilters($mappedList); // check global field trigger keyword bank. 1:1 match and case sensitive, auto mark as spam
     }
 
     private function checkForTriggerVals($filterList): bool
     {
         return ( count( array_diff( $filterList, $this->getData() ) ) !== count( $filterList ) );
+    }
+
+    private function checkMappedFieldFilters($mappedList): bool
+    {
+        $data = $this->getData();
+        foreach ($data as $fieldName => $fieldValue) {
+            if (isset($mappedList[$fieldName])) {
+                if ($this->checkForTriggerVals($mappedList[$fieldName]))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     // check if two fields have identical values
@@ -132,5 +106,45 @@ class FormSubmissionFilter
         }
 
         return false;
+    }
+
+    private function getData(): array
+    {
+        return self::$data;
+    }
+
+    private function setData($data): void
+    {
+        self::$data = $data;
+    }
+
+    private function getKeyCount(): bool
+    {
+        return self::$keyCount;
+    }
+
+    private function setKeyCount($val): void
+    {
+        self::$keyCount = $val;
+    }
+
+    private function getDupeCheck(): bool
+    {
+        return self::$dupeCheck;
+    }
+
+    private function setDupeCheck($val): void
+    {
+        self::$dupeCheck = $val;
+    }
+
+    private function getMessages(): array
+    {
+        return self::$messages;
+    }
+
+    private function setMessages($messages): void
+    {
+        self::$messages = $messages;
     }
 }
