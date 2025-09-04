@@ -14,6 +14,7 @@ use SilverStripe\Security\Security;
 use SilverStripe\Core\Injector\Injector;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\UserForms\Model\Submission\SubmittedForm;
+use SilverStripe\UserForms\Model\Submission\SubmittedFormField;
 
 
 class InnismaggioreUserFormExtension extends Extension
@@ -99,9 +100,14 @@ class InnismaggioreUserFormExtension extends Extension
                 if (!$recipient->SpamRecipient)
                     $recipients->remove($recipient);
             }
-            if ($this->getOwner()->DeleteSpamSubmission) {
-                if ($subFormID = $this->getOwner()->getController()->getUserFormController()->getSubFormID()) {
+
+            if ($subFormID = $this->getOwner()->getController()->getUserFormController()->getSubFormID()) {
+                if ($this->getOwner()->DeleteSpamSubmission) {
                     SubmittedForm::get_by_id($subFormID)->delete();
+                } else {
+                    $submittedForm = SubmittedForm::get_by_id($subFormID);
+                    $submittedForm->SuspectedSpam = true;
+                    $submittedForm->write();
                 }
             }
         }
