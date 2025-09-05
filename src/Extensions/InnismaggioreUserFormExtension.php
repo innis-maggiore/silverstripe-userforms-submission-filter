@@ -2,6 +2,7 @@
 
 namespace InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions;
 
+use DNADesign\ElementalUserForms\Model\ElementForm;
 use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Code\FormSubmissionFilter;
 use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Models\Spam\FieldFilter;
 use SilverStripe\Control\Controller;
@@ -19,8 +20,6 @@ use SilverStripe\Security\Security;
 use SilverStripe\Core\Injector\Injector;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\UserForms\Model\Submission\SubmittedForm;
-use SilverStripe\UserForms\Model\Submission\SubmittedFormField;
-
 
 class InnismaggioreUserFormExtension extends Extension
 {
@@ -121,10 +120,14 @@ class InnismaggioreUserFormExtension extends Extension
 
     public function updateFilteredEmailRecipients($recipients, $data, $form)
     {
+        $controller = Controller::curr();
         $ex_list = $this->getExplicitFieldList();
         $count_list = $this->getCountMessageList();
         $mapped_list = $this->getMappedFilterList();
         $formSubFilter = new FormSubmissionFilter($data, $form);
+
+        if (class_exists(ElementForm::class) && $controller->ClassName === ElementForm::class)
+            $controller = $controller->getUserFormController();
 
         if ($formSubFilter->matchesSpam($ex_list, $count_list, $mapped_list)) {
             foreach ($recipients as $recipient) {
@@ -132,7 +135,7 @@ class InnismaggioreUserFormExtension extends Extension
                     $recipients->remove($recipient);
             }
 
-            if ($subFormID = Controller::curr()->getSubFormID()) {
+            if ($subFormID = $controller->getSubFormID()) {
                 if ($this->getOwner()->DeleteSpamSubmission) {
                     SubmittedForm::get_by_id($subFormID)->delete();
                 } else {
