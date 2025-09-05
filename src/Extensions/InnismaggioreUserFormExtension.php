@@ -126,7 +126,7 @@ class InnismaggioreUserFormExtension extends Extension
         $mapped_list = $this->getMappedFilterList();
         $formSubFilter = new FormSubmissionFilter($data, $form);
 
-        if (class_exists(ElementForm::class) && $controller->ClassName === ElementForm::class)
+        if (class_exists('DNADesign\ElementalUserForms\Model\ElementForm') && $controller->ClassName === ElementForm::class)
             $controller = $controller->getUserFormController();
 
         if ($formSubFilter->matchesSpam($ex_list, $count_list, $mapped_list)) {
