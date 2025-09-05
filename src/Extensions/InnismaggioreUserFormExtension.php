@@ -98,7 +98,7 @@ class InnismaggioreUserFormExtension extends Extension
         $count_list = $this->getCountMessageList();
         $formSubFilter = new FormSubmissionFilter($data, $form);
 
-        if ($controller->ClassName === ElementForm::class)
+        if (class_exists('DNADesign\ElementalUserForms\Model\ElementForm') && $controller->ClassName === ElementForm::class)
             $controller = $controller->getUserFormController();
 
         if ($formSubFilter->matchesSpam($ex_list, $count_list)) {
