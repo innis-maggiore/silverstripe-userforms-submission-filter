@@ -5,6 +5,7 @@ namespace InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Extensions;
 use DNADesign\ElementalUserForms\Control\ElementFormController;
 use DNADesign\ElementalUserForms\Model\ElementForm;
 use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Code\FormSubmissionFilter;
+use InnisMaggiore\SilverstripeUserFormsSubmissionFilter\Models\FormFields\IpFormField;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extension;
@@ -98,7 +99,8 @@ class InnismaggioreUserFormExtension extends Extension
         $count_list = $this->getCountMessageList();
         $formSubFilter = new FormSubmissionFilter($data, $form);
 
-        if (class_exists('DNADesign\ElementalUserForms\Model\ElementForm') && $controller->ClassName === ElementForm::class)
+        if (class_exists('DNADesign\ElementalUserForms\Model\ElementForm')
+            && in_array(ElementForm::class, $controller->getClassAncestry()))
             $controller = $controller->getUserFormController();
 
         if ($formSubFilter->matchesSpam($ex_list, $count_list)) {
