@@ -81,4 +81,13 @@ class IpFormField extends EditableFormField
     {
         parent::updateFormField($field);
     }
+
+    public function onBeforeWrite()
+    {
+        $array = explode('\\', $this->ClassName);
+        if ( !str_contains( $this->Name, array_pop($array) ) )
+            $this->Name = null;
+
+        parent::onBeforeWrite();
+    }
 }
